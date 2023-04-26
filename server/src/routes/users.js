@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
@@ -10,8 +10,8 @@ const router = express.Router();
 
 //NOTE - creating a new user with the userName and password and saving it to the database
 router.post("/register", async (req, res) => {
-	const { userName, password } = req.body;
-	const user = await userModel.findOne({ userName });
+	const { username, password } = req.body;
+	const user = await userModel.findOne({ username });
 
 	if (user) {
 		return res.status(400).json({ message: "User already exists" });
@@ -19,16 +19,21 @@ router.post("/register", async (req, res) => {
 	//NOTE - hashing the password with bcrypt.hash()
 	const hashedPassword = await bcrypt.hash(password, 10);
 	const newUser = new userModel({
-		userName,
+		username,
 		password: hashedPassword,
 	});
-	await newUser.save();
-	res.json({ message: "User created successfully" });
+	try {
+		await newUser.save();
+		res.json({ message: "User created successfully" });
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ error: "Error creating user" });
+	}
 });
 
 router.post("/login", async (req, res) => {
-	const { userName, password } = req.body;
-	const user = await userModel.findOne({ userName });
+	const { username, password } = req.body;
+	const user = await userModel.findOne({ username });
 
 	if (!user) {
 		return res.status(400).json({ message: "User does not exist" });
@@ -48,7 +53,7 @@ router.post("/login", async (req, res) => {
 			expiresIn: "24h",
 		}
 	);
-    res.json({ token, userID: user._id, message: "User logged in successfully" });
+	res.json({ token, userID: user._id, message: "User logged in successfully" });
 });
 
 export { router as userRouter };
